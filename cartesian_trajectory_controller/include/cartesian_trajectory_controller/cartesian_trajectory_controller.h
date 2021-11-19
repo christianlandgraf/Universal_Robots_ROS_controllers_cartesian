@@ -31,9 +31,11 @@
 #include <cartesian_trajectory_interpolation/cartesian_state.h>
 #include <cartesian_control_msgs/FollowCartesianTrajectoryAction.h>
 #include <cartesian_control_msgs/CartesianTolerance.h>
+#include <processit_msgs/IndexedPose.h>
 #include <atomic>
 #include <mutex>
 #include <actionlib/server/simple_action_server.h>
+#include <speed_scaling_interface/speed_scaling_interface.h>
 #include <speed_scaling_interface/speed_scaling_interface.h>
 
 namespace cartesian_trajectory_controller
@@ -57,6 +59,8 @@ public:
   void executeCB(const cartesian_control_msgs::FollowCartesianTrajectoryGoalConstPtr& goal);
 
   void preemptCB();
+
+  void laserscanner_offset_cb(processit_msgs::IndexedPose indexed_pose);
 
 protected:
   using ControlPolicy = ros_controllers_cartesian::ControlPolicy<HWInterface>;
@@ -85,9 +89,12 @@ private:
   std::atomic<bool> done_;
   std::mutex lock_;
   ros_controllers_cartesian::CartesianTrajectory trajectory_;
+  cartesian_control_msgs::CartesianTrajectory ros_trajectory_;
   TrajectoryDuration trajectory_duration_;
   cartesian_control_msgs::CartesianTolerance path_tolerances_;
   cartesian_control_msgs::CartesianTolerance goal_tolerances_;
+  ros::Subscriber laser_scanner_offset_;
+  geometry_msgs::Pose current_laser_scanner_offset_;
 };
 
 }  // namespace cartesian_trajectory_controller

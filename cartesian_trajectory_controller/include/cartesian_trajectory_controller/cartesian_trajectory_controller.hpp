@@ -64,6 +64,10 @@ bool CartesianTrajectoryController<HWInterface>::init(hardware_interface::RobotH
 
   action_server_->start();
 
+  // Add Subscriber to laser scanner offset
+  laser_scanner_offset_ = controller_nh.subscribe<processit_msgs::IndexedPose>(
+      "/laser_scanner_offset", 1, &CartesianTrajectoryController::laserscanner_offset_cb, this);
+
   return true;
 }
 
@@ -72,6 +76,20 @@ void CartesianTrajectoryController<HWInterface>::starting(const ros::Time& time)
 {
   // Start where we are
   ControlPolicy::updateCommand(ControlPolicy::getState());
+}
+
+template <class HWInterface>
+void CartesianTrajectoryController<HWInterface>::laserscanner_offset_cb(processit_msgs::IndexedPose indexed_pose)
+{
+  cartesian_control_msgs::CartesianTrajectoryPoint point1 = ros_trajectory_.points.at(indexed_pose.index - 1);
+  ros_trajectory_.points.at(indexed_pose.index).pose = indexed_pose.pose;
+  cartesian_control_msgs::CartesianTrajectoryPoint point2 = ros_trajectory_.points.at(indexed_pose.index);
+
+  ros_controllers_cartesian::CartesianTrajectorySegment new_segment_(
+      point1.time_from_start.toSec(), ros_controllers_cartesian::CartesianState(point1), point2.time_from_start.toSec(),
+      ros_controllers_cartesian::CartesianState(point2));
+
+  trajectory_.change(indexed_pose.index, new_segment_);
 }
 
 template <class HWInterface>
@@ -101,6 +119,13 @@ void CartesianTrajectoryController<HWInterface>::update(const ros::Time& time, c
 
       ros_controllers_cartesian::CartesianState desired;
       trajectory_.sample(trajectory_duration_.now.toSec(), desired);
+      // desired.p.x() = current_laser_scanner_offset_.position.x;
+      // desired.p.y() = current_laser_scanner_offset_.position.y;
+      // desired.p.z() = current_laser_scanner_offset_.position.z;
+      // desired.q.x() += current_laser_scanner_offset_.orientation.x;
+      // desired.q.y() += current_laser_scanner_offset_.orientation.y;
+      // desired.q.z() += current_laser_scanner_offset_.orientation.z;
+      // desired.q.w() += current_laser_scanner_offset_.orientation.w;
 
       ControlPolicy::updateCommand(desired);
 
@@ -145,6 +170,7 @@ void CartesianTrajectoryController<HWInterface>::executeCB(
 
   path_tolerances_ = goal->path_tolerance;
   goal_tolerances_ = goal->goal_tolerance;
+  ros_trajectory_ = goal->trajectory;
 
   // Start where we are by adding the current state as first trajectory
   // waypoint.

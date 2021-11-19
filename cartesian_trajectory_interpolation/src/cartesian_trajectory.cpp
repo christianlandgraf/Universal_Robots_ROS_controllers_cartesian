@@ -61,4 +61,11 @@ bool CartesianTrajectory::init(const cartesian_control_msgs::CartesianTrajectory
   }
   return true;
 }
+
+bool CartesianTrajectory::change(const int index, const CartesianTrajectorySegment& new_segment_)
+{
+  trajectory_data_.at(index) = new_segment_;
+  return true;
+}
+
 }  // namespace ros_controllers_cartesian

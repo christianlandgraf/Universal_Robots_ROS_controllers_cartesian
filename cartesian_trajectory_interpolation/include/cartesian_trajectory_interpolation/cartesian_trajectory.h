@@ -90,6 +90,8 @@ public:
    */
   void sample(const CartesianTrajectorySegment::Time& time, CartesianState& state);
 
+  bool change(const int index, const CartesianTrajectorySegment& new_segment_);
+
 private:
   std::vector<CartesianTrajectorySegment> trajectory_data_;
 };

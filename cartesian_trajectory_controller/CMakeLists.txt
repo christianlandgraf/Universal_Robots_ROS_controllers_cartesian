@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   hardware_interface
   kdl_parser
   pluginlib
+  processit_msgs
   roscpp
   rospy
   speed_scaling_interface
@@ -118,6 +119,7 @@ catkin_package(
   hardware_interface
   kdl_parser
   pluginlib
+  processit_msgs
   roscpp
   rospy
   speed_scaling_interface
