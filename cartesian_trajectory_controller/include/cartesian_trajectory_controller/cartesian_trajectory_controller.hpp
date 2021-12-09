@@ -65,7 +65,7 @@ bool CartesianTrajectoryController<HWInterface>::init(hardware_interface::RobotH
   action_server_->start();
 
   // Add Subscriber to laser scanner offset
-  laser_scanner_offset_ = controller_nh.subscribe<processit_msgs::IndexedPose>(
+  laser_scanner_offset_ = controller_nh.subscribe<processit_msgs::ExtendedCartesianTrajectoryPoint>(
       "/laser_scanner_offset", 1, &CartesianTrajectoryController::laserscanner_offset_cb, this);
 
   return true;
@@ -79,17 +79,31 @@ void CartesianTrajectoryController<HWInterface>::starting(const ros::Time& time)
 }
 
 template <class HWInterface>
-void CartesianTrajectoryController<HWInterface>::laserscanner_offset_cb(processit_msgs::IndexedPose indexed_pose)
+void CartesianTrajectoryController<HWInterface>::laserscanner_offset_cb(
+    processit_msgs::ExtendedCartesianTrajectoryPoint extended_cartesian_trajectory_point)
 {
-  cartesian_control_msgs::CartesianTrajectoryPoint point1 = ros_trajectory_.points.at(indexed_pose.index - 1);
-  ros_trajectory_.points.at(indexed_pose.index).pose = indexed_pose.pose;
-  cartesian_control_msgs::CartesianTrajectoryPoint point2 = ros_trajectory_.points.at(indexed_pose.index);
+  if (extended_cartesian_trajectory_point.index >= 0)
+  {
+    ROS_INFO_STREAM(
+        "Update pose " << extended_cartesian_trajectory_point.index << " With time "
+                       << ros_trajectory_.points.at(extended_cartesian_trajectory_point.index).time_from_start);
 
-  ros_controllers_cartesian::CartesianTrajectorySegment new_segment_(
-      point1.time_from_start.toSec(), ros_controllers_cartesian::CartesianState(point1), point2.time_from_start.toSec(),
-      ros_controllers_cartesian::CartesianState(point2));
+    ros_trajectory_.points.at(extended_cartesian_trajectory_point.index) = extended_cartesian_trajectory_point.point;
 
-  trajectory_.change(indexed_pose.index, new_segment_);
+    if (extended_cartesian_trajectory_point.index > 0)
+    {
+      cartesian_control_msgs::CartesianTrajectoryPoint point1 =
+          ros_trajectory_.points.at(extended_cartesian_trajectory_point.index - 1);
+      cartesian_control_msgs::CartesianTrajectoryPoint point2 =
+          ros_trajectory_.points.at(extended_cartesian_trajectory_point.index);
+
+      ros_controllers_cartesian::CartesianTrajectorySegment new_segment_(
+          point1.time_from_start.toSec(), ros_controllers_cartesian::CartesianState(point1),
+          point2.time_from_start.toSec(), ros_controllers_cartesian::CartesianState(point2));
+
+      trajectory_.change(extended_cartesian_trajectory_point.index, new_segment_);
+    }
+  }
 }
 
 template <class HWInterface>

@@ -31,7 +31,7 @@
 #include <cartesian_trajectory_interpolation/cartesian_state.h>
 #include <cartesian_control_msgs/FollowCartesianTrajectoryAction.h>
 #include <cartesian_control_msgs/CartesianTolerance.h>
-#include <processit_msgs/IndexedPose.h>
+#include <processit_msgs/ExtendedCartesianTrajectoryPoint.h>
 #include <atomic>
 #include <mutex>
 #include <actionlib/server/simple_action_server.h>
@@ -60,7 +60,7 @@ public:
 
   void preemptCB();
 
-  void laserscanner_offset_cb(processit_msgs::IndexedPose indexed_pose);
+  void laserscanner_offset_cb(processit_msgs::ExtendedCartesianTrajectoryPoint extended_cartesian_trajectory_point);
 
 protected:
   using ControlPolicy = ros_controllers_cartesian::ControlPolicy<HWInterface>;
