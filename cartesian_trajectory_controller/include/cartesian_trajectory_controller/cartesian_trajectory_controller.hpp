@@ -84,11 +84,11 @@ void CartesianTrajectoryController<HWInterface>::laserscanner_offset_cb(
 {
   if (extended_cartesian_trajectory_point.index >= 0)
   {
+    ros_trajectory_.points.at(extended_cartesian_trajectory_point.index) = extended_cartesian_trajectory_point.point;
+
     ROS_INFO_STREAM(
         "Update pose " << extended_cartesian_trajectory_point.index << " With time "
                        << ros_trajectory_.points.at(extended_cartesian_trajectory_point.index).time_from_start);
-
-    ros_trajectory_.points.at(extended_cartesian_trajectory_point.index) = extended_cartesian_trajectory_point.point;
 
     if (extended_cartesian_trajectory_point.index > 0)
     {
@@ -149,6 +149,8 @@ void CartesianTrajectoryController<HWInterface>::update(const ros::Time& time, c
 
       cartesian_control_msgs::FollowCartesianTrajectoryFeedback f;
       auto now = trajectory_duration_.now.toSec();
+      // f.header.stamp = f.header.stamp + trajectory_duration_.now;
+      f.header.stamp = ros::Time(0) + trajectory_duration_.now;
       f.desired = desired.toMsg(now);
       f.actual = actual.toMsg(now);
       f.error = error.toMsg(now);
